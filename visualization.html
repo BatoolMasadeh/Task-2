@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traffic Incident Analysis Using Vega-Lite</title>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.20.2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.8.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.21.0"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 20px;
+    }
+    .visualization-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+    .visualization {
+      width: 80%;
+      height: 500px; /* Increased height for graphs */
+    }
+    h2 {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Traffic Incident Analysis Using Vega-Lite</h1>
+
+<div class="visualization-container">
+  <h2>Task 1: Accident Distribution by Day of the Week</h2>
+  <div class="visualization" id="chart1"></div>
+</div>
+
+<div class="visualization-container">
+  <h2>Task 2: Accident Distribution by Hour of the Day</h2>
+  <div class="visualization" id="chart2"></div>
+</div>
+
+<div class="visualization-container">
+  <h2>Task 3: Accident Density Across Dubai</h2>
+  <div class="visualization" id="chart3"></div>
+</div>
+
+<script>
+  // Visualization 1: Accident distribution by day of the week
+  const spec1 = {
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "width": 400,
+    "height": 400,
+    "description": "Accident distribution by day of the week.",
+    "data": {
+      "url": "https://raw.githubusercontent.com/sheriefAbdallah/CS318/refs/heads/main/Traffic_Incidents.csv",
+      "format": {
+        "type": "csv",
+        "parse": {"acci_time": "utc:%d/%m/%Y %H:%M:%S"}
+      }
+    },
+    "transform": [
+      {
+        "calculate": "day(datum.acci_time)",
+        "as": "day_of_week"
+      },
+      {
+        "calculate": "['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][datum.day_of_week]",
+        "as": "day_name"
+      }
+    ],
+    "mark": "bar",
+    "encoding": {
+      "x": {
+        "field": "day_name",
+        "type": "nominal",
+        "title": "Day of the Week",
+        "sort": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+      },
+      "y": {
+        "aggregate": "count",
+        "title": "Number of Accidents"
+      },
+      "color": {
+        "field": "day_name",
+        "type": "nominal",
+        "title": "Day of the Week",
+        "scale": {
+          "domain": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+          "range": ["#aec7e8", "#1f78b4", "#33a02c", "#e31a1c", "#6a3d9a", "#fb9a99", "#b2df8a"]
+        }
+      }
+    }
+  };
+
+  // Visualization 2: Accident distribution by hour of the day
+  // Visualization 2: Accident distribution by hour of the day
+  // Visualization 2: Accident distribution by hour of the day
+  const spec2 = {
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "width": 400,
+    "height": 400,
+    "description": "Accident distribution by hour of the day.",
+    "data": {
+      "url": "https://raw.githubusercontent.com/sheriefAbdallah/CS318/refs/heads/main/Traffic_Incidents.csv",
+      "format": {
+        "type": "csv",
+        "parse": {"acci_time": "utc:%d/%m/%Y %H:%M:%S"}
+      }
+    },
+    "transform": [
+      {
+        "calculate": "hours(datum.acci_time)",
+        "as": "hour_of_day"
+      },
+      {
+        "calculate": "day(datum.acci_time)",
+        "as": "day_of_week"
+      },
+      {
+        "calculate": "['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][datum.day_of_week]",
+        "as": "day_name"
+      }
+    ],
+    "mark": "line",
+    "encoding": {
+      "x": {
+        "field": "hour_of_day",
+        "type": "quantitative",
+        "title": "Hour of the Day",
+        "scale": {"domain": [0, 23]}
+      },
+      "y": {
+        "aggregate": "count",
+        "title": "Number of Accidents"
+      },
+      "color": {
+        "field": "day_name",
+        "type": "nominal",
+        "legend": {"title": "Day of the Week"},
+        "scale": {
+          "domain": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+          // Updated Thursday color
+          "range": ["#FF5733", "#33FF57", "#3357FF", "#FF33A1", "#FFC300", "#581845", "#900C3F"]
+        }
+      }
+    }
+  };
+
+
+  // Visualization 3: Geospatial accident distribution
+  const spec3 = {
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "description": "Geospatial accident distribution.",
+    "data": {
+      "url": "https://raw.githubusercontent.com/sheriefAbdallah/CS318/refs/heads/main/Traffic_Incidents.csv",
+      "format": {
+        "type": "csv",
+        "parse": {
+          "acci_time": "date:'%d/%m/%Y %H:%M:%S'"
+        }
+      }
+    },
+    "transform": [
+      {"filter": "datum.acci_y > 23"},
+      {
+        "aggregate": [
+          {"op": "count", "as": "count"}
+        ],
+        "groupby": ["acci_x", "acci_y"]
+      }
+    ],
+    "layer": [
+      {
+        "mark": {
+          "type": "geoshape",
+          "fill": "#e0e0e0",
+          "stroke": "#4d4d4d"
+        },
+        "data": {
+          "url": "https://raw.githubusercontent.com/sbma44/uber-cities/refs/heads/master/geojson/dubai.geojson",
+          "format": {
+            "type": "json"
+          }
+        }
+      },
+      {
+        "mark": {
+          "type": "circle",
+          "opacity": 0.6 // Increased opacity for better visibility
+        },
+        "encoding": {
+          "longitude": {"field": "acci_y", "type": "quantitative"},
+          "latitude": {"field": "acci_x", "type": "quantitative"},
+          "color": {
+            "field": "count",
+            "type": "quantitative",
+            "scale": {
+              "domain": [0, 100],
+              "range": ["#d0e1f9", "#3f5d7d"] // Shades of blue from light to dark
+            }
+          }
+        }
+      }
+    ],
+    "width": 1200,
+    "height": 1200
+  };
+
+  // Embed the visualizations
+  vegaEmbed('#chart1', spec1);
+  vegaEmbed('#chart2', spec2);
+  vegaEmbed('#chart3', spec3);
+</script>
+
+</body>
+</html>
